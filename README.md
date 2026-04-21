@@ -8,7 +8,7 @@
 
 ---
 
-## 🎯 Objectives
+## Objectives
 
 This project simulates and optimizes a simplified electrical system based on a **fictional European region** (inspired by Iberian Peninsula characteristics). It demonstrates:
 
@@ -54,7 +54,7 @@ This project simulates and optimizes a simplified electrical system based on a *
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 pypsa-energy-project/
@@ -92,7 +92,7 @@ pypsa-energy-project/
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 
