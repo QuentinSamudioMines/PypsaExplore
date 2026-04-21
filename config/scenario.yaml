@@ -1,0 +1,424 @@
+# =============================================================================
+# PyPSA Energy System Optimization - Scenario Configuration
+# =============================================================================
+# This file defines simulation scenarios for the renewable transition case study.
+# Each scenario specifies network topology, generation capacities, and costs.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# GLOBAL SETTINGS
+# -----------------------------------------------------------------------------
+settings:
+  # Time horizon for simulation (hours)
+  # 8760 = full year, 168 = one week, 720 = one month
+  timesteps: 168  # Default: one week for quick testing, use 8760 for full year
+  
+  # Time resolution (hours)
+  resolution: 1
+  
+  # Snapshot selection: 'all', 'summer_week', 'winter_week', 'random_sample'
+  snapshot_strategy: "all"
+  
+  # Solver configuration
+  solver:
+    name: "cbc"  # Options: cbc, glpk, gurobi, cplex
+    threads: 4
+    time_limit: 3600  # seconds
+    log_file: "results/solver.log"
+  
+  # Output configuration
+  output:
+    save_results: true
+    save_network: true
+    save_plots: true
+    results_path: "results/"
+    plot_format: "png"  # Options: png, pdf, svg
+    plot_dpi: 300
+
+# -----------------------------------------------------------------------------
+# NETWORK TOPOLOGY
+# -----------------------------------------------------------------------------
+network:
+  # Bus configuration
+  buses:
+    - name: "North"
+      carrier: "AC"
+      x: 1.0  # Geographic coordinates for plotting
+      y: 5.0
+      country: "Region_N"
+      
+    - name: "South"
+      carrier: "AC"
+      x: 2.0
+      y: 1.0
+      country: "Region_S"
+  
+  # Transmission lines
+  lines:
+    - name: "North_South"
+      bus0: "North"
+      bus1: "South"
+      carrier: "AC"
+      s_nom: 1000  # MVA - nominal capacity
+      x: 0.01  # per-unit reactance
+      r: 0.001  # per-unit resistance
+      length: 300  # km (for reference)
+      
+  # Carriers (energy types)
+  carriers:
+    - "AC"
+    - "wind"
+    - "solar"
+    - "gas"
+    - "battery"
+
+# -----------------------------------------------------------------------------
+# SCENARIO DEFINITIONS
+# -----------------------------------------------------------------------------
+
+# =============================================================================
+# SCENARIO 1: BASELINE (Fossil-heavy mix)
+# =============================================================================
+baseline:
+  description: "Classical generation mix with high fossil fuel dependence"
+  
+  # Demand configuration (per bus)
+  demand:
+    North:
+      base_load_mw: 800  # Average load
+      peak_load_mw: 1200
+      profile_source: "data/demand_hourly.csv"
+      profile_column: "demand_north"
+    South:
+      base_load_mw: 1200
+      peak_load_mw: 1800
+      profile_source: "data/demand_hourly.csv"
+      profile_column: "demand_south"
+  
+  # Generator configuration
+  generators:
+    # --- NORTH ZONE ---
+    - name: "North_Wind"
+      bus: "North"
+      carrier: "wind"
+      p_nom: 400  # Installed capacity MW
+      p_nom_extendable: false
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "wind_north"
+      capital_cost: 1500000  # €/MW
+      marginal_cost: 0.0  # €/MWh
+      co2_emissions: 0.0  # tCO2/MWh
+      
+    - name: "North_Solar"
+      bus: "North"
+      carrier: "solar"
+      p_nom: 200
+      p_nom_extendable: false
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "solar_north"
+      capital_cost: 800000  # €/MW
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    - name: "North_Gas"
+      bus: "North"
+      carrier: "gas"
+      p_nom: 300
+      p_nom_extendable: true
+      p_nom_max: 1000  # Maximum expandable capacity
+      p_min_pu: 0.3  # Minimum stable generation
+      capital_cost: 800000  # €/MW
+      marginal_cost: 50.0  # €/MWh
+      co2_emissions: 0.35  # tCO2/MWh
+      efficiency: 0.58  # CCGT efficiency
+      
+    # --- SOUTH ZONE ---
+    - name: "South_Wind"
+      bus: "South"
+      carrier: "wind"
+      p_nom: 150
+      p_nom_extendable: false
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "wind_south"
+      capital_cost: 1500000
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    - name: "South_Solar"
+      bus: "South"
+      carrier: "solar"
+      p_nom: 600
+      p_nom_extendable: false
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "solar_south"
+      capital_cost: 800000
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    - name: "South_Gas"
+      bus: "South"
+      carrier: "gas"
+      p_nom: 500
+      p_nom_extendable: true
+      p_nom_max: 1500
+      p_min_pu: 0.3
+      capital_cost: 800000
+      marginal_cost: 50.0
+      co2_emissions: 0.35
+      efficiency: 0.58
+  
+  # Storage configuration
+  storage_units:
+    - name: "North_Battery"
+      bus: "North"
+      carrier: "battery"
+      p_nom: 200  # Power capacity MW
+      p_nom_extendable: false
+      max_hours: 4  # Duration: 800 MWh
+      efficiency_store: 0.95
+      efficiency_dispatch: 0.95
+      standing_loss: 0.0001  # per hour
+      capital_cost: 200000  # €/MW
+      marginal_cost: 1.0  # €/MWh (small cost to avoid cycling)
+      
+    - name: "South_Battery"
+      bus: "South"
+      carrier: "battery"
+      p_nom: 400
+      p_nom_extendable: false
+      max_hours: 4  # 1600 MWh
+      efficiency_store: 0.95
+      efficiency_dispatch: 0.95
+      standing_loss: 0.0001
+      capital_cost: 200000
+      marginal_cost: 1.0
+
+# =============================================================================
+# SCENARIO 2: HIGH RENEWABLE
+# =============================================================================
+high_renewable:
+  description: "High penetration of renewables with extended storage capacity"
+  
+  demand:
+    North:
+      base_load_mw: 800
+      peak_load_mw: 1200
+      profile_source: "data/demand_hourly.csv"
+      profile_column: "demand_north"
+    South:
+      base_load_mw: 1200
+      peak_load_mw: 1800
+      profile_source: "data/demand_hourly.csv"
+      profile_column: "demand_south"
+  
+  generators:
+    # --- NORTH ZONE (Wind-rich) ---
+    - name: "North_Wind"
+      bus: "North"
+      carrier: "wind"
+      p_nom: 1500  # 3.75x baseline
+      p_nom_extendable: true
+      p_nom_max: 3000
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "wind_north"
+      capital_cost: 1200000  # Reduced due to learning curve
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    - name: "North_Solar"
+      bus: "North"
+      carrier: "solar"
+      p_nom: 400
+      p_nom_extendable: true
+      p_nom_max: 800
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "solar_north"
+      capital_cost: 600000  # Reduced cost
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    - name: "North_Gas"
+      bus: "North"
+      carrier: "gas"
+      p_nom: 100  # Reduced backup
+      p_nom_extendable: true
+      p_nom_max: 500
+      p_min_pu: 0.2  # More flexible
+      capital_cost: 800000
+      marginal_cost: 70.0  # Higher carbon price impact
+      co2_emissions: 0.35
+      efficiency: 0.58
+      
+    # --- SOUTH ZONE (Solar-rich) ---
+    - name: "South_Wind"
+      bus: "South"
+      carrier: "wind"
+      p_nom: 600
+      p_nom_extendable: true
+      p_nom_max: 1200
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "wind_south"
+      capital_cost: 1200000
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    - name: "South_Solar"
+      bus: "South"
+      carrier: "solar"
+      p_nom: 2000  # 3.3x baseline
+      p_nom_extendable: true
+      p_nom_max: 4000
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "solar_south"
+      capital_cost: 600000
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    - name: "South_Gas"
+      bus: "South"
+      carrier: "gas"
+      p_nom: 200  # Reduced backup
+      p_nom_extendable: true
+      p_nom_max: 800
+      p_min_pu: 0.2
+      capital_cost: 800000
+      marginal_cost: 70.0
+      co2_emissions: 0.35
+      efficiency: 0.58
+  
+  storage_units:
+    - name: "North_Battery"
+      bus: "North"
+      carrier: "battery"
+      p_nom: 800  # 4x baseline
+      p_nom_extendable: true
+      p_nom_max: 2000
+      max_hours: 6  # Longer duration: 4800 MWh
+      efficiency_store: 0.95
+      efficiency_dispatch: 0.95
+      standing_loss: 0.0001
+      capital_cost: 150000  # Reduced cost
+      marginal_cost: 1.0
+      cyclic_state_of_charge: true  # Start and end at same SOC
+      
+    - name: "South_Battery"
+      bus: "South"
+      carrier: "battery"
+      p_nom: 1200  # 3x baseline
+      p_nom_extendable: true
+      p_nom_max: 3000
+      max_hours: 6  # 7200 MWh
+      efficiency_store: 0.95
+      efficiency_dispatch: 0.95
+      standing_loss: 0.0001
+      capital_cost: 150000
+      marginal_cost: 1.0
+      cyclic_state_of_charge: true
+
+# =============================================================================
+# SCENARIO 3: NET ZERO (Advanced scenario for future analysis)
+# =============================================================================
+net_zero:
+  description: "Net-zero emissions scenario with 100% renewable target and extended storage"
+  
+  demand:
+    North:
+      base_load_mw: 800
+      peak_load_mw: 1200
+      profile_source: "data/demand_hourly.csv"
+      profile_column: "demand_north"
+    South:
+      base_load_mw: 1200
+      peak_load_mw: 1800
+      profile_source: "data/demand_hourly.csv"
+      profile_column: "demand_south"
+  
+  # Global constraints
+  global_constraints:
+    - name: "co2_limit"
+      type: "primary_energy"
+      carrier_attribute: "co2_emissions"
+      sense: "<="
+      constant: 0  # Zero emissions allowed
+      
+  generators:
+    # --- NORTH ZONE ---
+    - name: "North_Wind"
+      bus: "North"
+      carrier: "wind"
+      p_nom: 2000
+      p_nom_extendable: true
+      p_nom_max: 5000
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "wind_north"
+      capital_cost: 1000000
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    - name: "North_Solar"
+      bus: "North"
+      carrier: "solar"
+      p_nom: 800
+      p_nom_extendable: true
+      p_nom_max: 2000
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "solar_north"
+      capital_cost: 500000
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    # No gas in net-zero scenario
+    
+    # --- SOUTH ZONE ---
+    - name: "South_Wind"
+      bus: "South"
+      carrier: "wind"
+      p_nom: 1000
+      p_nom_extendable: true
+      p_nom_max: 2500
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "wind_south"
+      capital_cost: 1000000
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+      
+    - name: "South_Solar"
+      bus: "South"
+      carrier: "solar"
+      p_nom: 3000
+      p_nom_extendable: true
+      p_nom_max: 6000
+      p_max_pu_source: "data/renewables_profiles.csv"
+      p_max_pu_column: "solar_south"
+      capital_cost: 500000
+      marginal_cost: 0.0
+      co2_emissions: 0.0
+  
+  storage_units:
+    - name: "North_Battery"
+      bus: "North"
+      carrier: "battery"
+      p_nom: 1500
+      p_nom_extendable: true
+      p_nom_max: 4000
+      max_hours: 8  # Long-duration storage
+      efficiency_store: 0.95
+      efficiency_dispatch: 0.95
+      standing_loss: 0.00005
+      capital_cost: 120000
+      marginal_cost: 1.0
+      cyclic_state_of_charge: true
+      
+    - name: "South_Battery"
+      bus: "South"
+      carrier: "battery"
+      p_nom: 2000
+      p_nom_extendable: true
+      p_nom_max: 5000
+      max_hours: 8
+      efficiency_store: 0.95
+      efficiency_dispatch: 0.95
+      standing_loss: 0.00005
+      capital_cost: 120000
+      marginal_cost: 1.0
+      cyclic_state_of_charge: true

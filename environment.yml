@@ -1,0 +1,27 @@
+name: pypsa_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy=1.26.4
+  - pandas=2.1.4
+  - xarray=2023.6.0
+  - matplotlib=3.8.2
+  - seaborn=0.13.0
+  - pyyaml=6.0.1
+  - jupyter
+  - ipykernel
+  - ipywidgets
+  - pytest
+  - pytest-cov
+  - numexpr
+  - bottleneck
+  - pip
+  - pip:
+    - pypsa>=0.25.0
+    - pandera>=0.15.0
+    - deprecation
+    - pyproj
+    - netcdf4
+    - scipy
