@@ -20,7 +20,7 @@ This project simulates and optimizes a simplified electrical system based on a *
 
 ---
 
-## 🗺️ System Architecture
+## System Architecture
 
 ### Geographic Layout
 
