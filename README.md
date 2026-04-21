@@ -1,4 +1,4 @@
-# PyPSA Energy System Optimization – Renewable Transition Case Study
+# Pypsa Energy System Optimization – Renewable Transition Case Study
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![PyPSA](https://img.shields.io/badge/PyPSA-0.25%2B-green)](https://pypsa.readthedocs.io/)
