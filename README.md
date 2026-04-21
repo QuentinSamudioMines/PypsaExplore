@@ -122,7 +122,7 @@ conda install -c conda-forge coincbc
 
 ---
 
-## 🎮 Usage
+## Usage
 
 ### Quick Start
 
@@ -158,7 +158,7 @@ jupyter notebook notebooks/exploratory_analysis.ipynb
 
 ---
 
-## 🛠️ Technical Details
+## Technical Details
 
 ### Optimization Formulation
 
